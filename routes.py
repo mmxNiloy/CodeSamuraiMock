@@ -38,6 +38,6 @@ def get_book(id):
     print(b)
 
     if b == None:
-        return Response(json.dumps({'message': f'book with id {id} was not found'}), status=404, content_type='application/json')
+        return Response(json.dumps({'message': f'book with id: {id} was not found'}), status=404, content_type='application/json')
 
     return Response(json.dumps(b.to_dict()), status=200, mimetype='application/json')
