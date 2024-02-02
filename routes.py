@@ -1,5 +1,6 @@
 from app import app, db
 from flask import render_template, request, Response
+from sqlalchemy import desc
 from models import Book
 import json
 
@@ -30,19 +31,81 @@ def add():
 
         return Response(json.dumps(rec.to_dict()), status=201, mimetype='application/json')
     elif request.method == 'GET':
-        books = Book.query.order_by(Book.id).all()
-        print(books)
-        # Serialize data
-        serializedBooks = []
+        if bool(request.args):
+            title = request.args.get('title')
+            author = request.args.get('author')
+            genre = request.args.get('genre')
+            sort = request.args.get('sort')
+            order = request.args.get('order')
+            
+            query = None
 
-        for book in books:
-            serializedBooks.append(book.to_dict())
-        
-        sData = {
-            'books': serializedBooks
-        }
+            if order == None:
+                order = 'ASC'
+            
+            # Handle search fields 
+            if title != None:
+                query = Book.query.filter(Book.title == title)
+            elif author != None:
+                query = Book.query.filter(Book.author == author)
+            elif genre != None:
+                query = Book.query.filter(Book.genre == genre)
+            else:
+                query = Book.query
+            
+            # Handle sort fields
+            if sort == 'title':
+                if order == 'ASC':
+                    query = query.order_by(Book.title)
+                else:
+                    query = query.order_by(desc(Book.title))
+            elif sort == 'genre':
+                if order == 'ASC':
+                    query = query.order_by(Book.genre)
+                else:
+                    query = query.order_by(desc(Book.genre))
+            elif sort == 'author':
+                if order == 'ASC':
+                    query = query.order_by(Book.author)
+                else:
+                    query = query.order_by(desc(Book.author))
+            elif sort == 'price':
+                if order == 'ASC':
+                    query = query.order_by(Book.price)
+                else:
+                    query = query.order_by(desc(Book.price))
+            else:
+                if order == 'ASC':
+                    query = query.order_by(Book.id)
+                else:
+                    query = query.order_by(desc(Book.id))
+            mBooks = query.all()
+            print(mBooks)
 
-        return Response(json.dumps(sData), status=200, mimetype='application/json')
+            mSerializedBooks = []
+
+            for book in mBooks:
+                mSerializedBooks.append(book.to_dict())
+            
+            mSerializedData = {
+                'books': mSerializedBooks
+            }
+
+            return Response(json.dumps(mSerializedBooks), status=200, mimetype='application/json')
+        else:
+            books = Book.query.order_by(Book.id).all()
+            print(books)
+            # Serialize data
+            serializedBooks = []
+
+            for book in books:
+                serializedBooks.append(book.to_dict())
+            
+            sData = {
+                'books': serializedBooks
+            }
+
+            return Response(json.dumps(sData), status=200, mimetype='application/json')
 
 @app.route('/api/books/<int:id>', methods=['GET', 'PUT'])
 def get_book(id):
